@@ -1,0 +1,8 @@
+SỔ KHÁCH CƯỚI V2.0
+
+Android offline. App ID: vn.offline.sokhachcuoi.v2
+Có: quản lý khách, nhóm khách, trạng thái mời/gửi thiệp, tiền mừng, tìm/lọc,
+Import/Export Excel XLSX, file Excel mẫu, sao lưu/khôi phục, tab Cài đặt.
+
+GitHub Actions: .github/workflows/build-apk.yml
+Workflow tạo APK debug cài trực tiếp để kiểm thử mà không cần keystore.
