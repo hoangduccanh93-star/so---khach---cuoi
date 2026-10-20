@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -23,11 +23,25 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build Debug APK
-        run: gradle assembleDebug
+      - name: Restore release keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: echo "$KEYSTORE_BASE64" | base64 --decode > app/SoKhachCuoi_Release.jks
 
-      - name: Upload APK
+      - name: Build signed Release APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          gradle assembleRelease \
+            -Pandroid.injected.signing.store.file="$GITHUB_WORKSPACE/app/SoKhachCuoi_Release.jks" \
+            -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
+
+      - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: So-Khach-Cuoi-V2-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: So-Khach-Cuoi-V2-Release
+          path: app/build/outputs/apk/release/app-release.apk
