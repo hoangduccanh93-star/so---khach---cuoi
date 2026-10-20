@@ -23,7 +23,49 @@ public class DbHelper extends SQLiteOpenHelper {
     }
 
     public long saveGuestV2(String name,String group,String phone,boolean called,boolean invited,int guestCount,Long gift,String note){
-        ContentValues v=new ContentValues();v.put("name",name.trim());v.put("group_name",group);v.put("phone",phone==null?"":phone.trim());v.put("called",called?1:0);v.put("invited",invited?1:0);v.put("guest_count",Math.max(1,guestCount));if(gift==null)v.putNull("gift");else v.put("gift",gift);v.put("note",note==null?"":note);v.put("created_at",System.currentTimeMillis());return getWritableDatabase().insert("guests",null,v);
+        name=name==null?"":name.trim();
+        group=group==null?"":group.trim();
+        phone=phone==null?"":phone.trim();
+
+        SQLiteDatabase db=getWritableDatabase();
+        Long existingId=null;
+        Cursor c=null;
+
+        try{
+            if(!phone.isEmpty()){
+                c=db.rawQuery(
+                    "SELECT id FROM guests WHERE TRIM(phone)=? AND TRIM(phone)<>'' LIMIT 1",
+                    new String[]{phone}
+                );
+            }else{
+                c=db.rawQuery(
+                    "SELECT id FROM guests WHERE LOWER(TRIM(name))=LOWER(?) AND LOWER(TRIM(group_name))=LOWER(?) LIMIT 1",
+                    new String[]{name,group}
+                );
+            }
+
+            if(c.moveToFirst()) existingId=c.getLong(0);
+        }finally{
+            if(c!=null)c.close();
+        }
+
+        ContentValues v=new ContentValues();
+        v.put("name",name);
+        v.put("group_name",group);
+        v.put("phone",phone);
+        v.put("called",called?1:0);
+        v.put("invited",invited?1:0);
+        v.put("guest_count",Math.max(1,guestCount));
+        if(gift==null)v.putNull("gift");else v.put("gift",gift);
+        v.put("note",note==null?"":note);
+
+        if(existingId!=null){
+            db.update("guests",v,"id=?",new String[]{String.valueOf(existingId)});
+            return existingId;
+        }
+
+        v.put("created_at",System.currentTimeMillis());
+        return db.insert("guests",null,v);
     }
     public void toggle(long id,String field,boolean value){ ContentValues v=new ContentValues();v.put(field,value?1:0);getWritableDatabase().update("guests",v,"id=?",new String[]{String.valueOf(id)}); }
     public void deleteGuest(long id){getWritableDatabase().delete("guests","id=?",new String[]{String.valueOf(id)});}
